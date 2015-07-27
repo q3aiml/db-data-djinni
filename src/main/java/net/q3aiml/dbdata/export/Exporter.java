@@ -5,6 +5,8 @@ import net.q3aiml.dbdata.DataSpec;
 import net.q3aiml.dbdata.config.DatabaseConfig;
 import net.q3aiml.dbdata.introspect.DefaultDatabaseIntrospector;
 import net.q3aiml.dbdata.model.*;
+import net.q3aiml.dbdata.morph.KeyResolver;
+import net.q3aiml.dbdata.morph.SortDataSpec;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -90,6 +92,11 @@ public class Exporter {
                 dataSpec.tableRows.add(magicRow);
             }
         }
+
+        KeyResolver keyResolver = new KeyResolver();
+        keyResolver.toReferences(dataSpec, db);
+        SortDataSpec sortDataSpec = new SortDataSpec();
+        sortDataSpec.sortRowTables(dataSpec, db);
 
         return dataSpec;
     }
