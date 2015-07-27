@@ -9,3 +9,4 @@ deploy:
   file: target/djinni.jar
   on:
     repo: q3aiml/db-data-djinni
+    tags: true
