@@ -2,3 +2,10 @@ language: java
 sudo: false
 jdk:
   - oraclejdk8
+deploy:
+  provider: releases
+  api_key:
+    secure: AyICo8a2a4RIpKuTEU3bFMr4ZterTgsnd3TRthk6mHWTqhEGt18kKK8Zv9xz36DBe+KjU92O03fIXZBadlVwueyG8FGvmSL99jI71NNRD/rpaH2JQU1MgFsKRiRTruJG7ZEZD364s55OWjPN3RLel2n06vl1ZhZ/XTn88MKYjkcXdwhZcpph4TaQt4HFTre5bIBZA9aaHP9Eia9vyfg6Fdd3eM6HxEPRniy9l7GLLH6WjTyVia/Zs+O1L9fBUB8rVMGSKpDW7+upOTY+/5wqcdHJFvBXUJ6UagA82Syq9kbMIXrdHjE/wgLH9L5nbyajM5XkVwfZex0zQzHlZvS5evDjiVVl58u478xlTmUfUe7kOwHcdoK9hLeH63UZHzDT3jgNzPR+/D3EB8rqT7TWk4wNOTSjP2TJfUHQVSJCbpuR9XybhzSg1hA61Sj0Qt/VaG2qc3DB2OXOeMPdO2CD8GLvQ37bDRjFMV1GJgjor1rCjkoCa/tZzTRUU5gkG0Puor3cOxJd9XE9w5GZcUFc8HaolkMVSewW+CHFr7hnvzaEnrCtPYo32WtdxBPcruTxIt1PygVdYt66xSMvanwgpwMU1LLcO+OFArCqwbYRWu7zOPwIbf1K379N3LP7cPsDpLvj2oRLrR3OxG8vx9oPmPSHqVRQ2G+pyq0u7DKfZ5A=
+  file: target/djinni.jar
+  on:
+    repo: q3aiml/db-data-djinni
