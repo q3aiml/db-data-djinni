@@ -5,11 +5,29 @@ import com.google.common.collect.ImmutableList;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class TableData {
-    public Table table;
+    private Table table;
     public String[] columnNames;
     public String[][] data;
+
+    public TableData() { }
+
+    public TableData(Table table, String[] columnNames, String[][] data) {
+        this.table = table;
+        this.columnNames = columnNames;
+        this.data = data;
+    }
+
+    public Table table() {
+        return table;
+    }
+
+    public TableData setTable(Table table) {
+        this.table = table;
+        return this;
+    }
 
     public int rowCount() {
         return data.length;
@@ -55,5 +73,20 @@ public class TableData {
                 ", columnNames=" + Arrays.toString(columnNames) +
                 ", data=" + data.length + " rows" +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof TableData)) return false;
+        TableData tableData = (TableData)o;
+        return Objects.equals(table, tableData.table) &&
+                Objects.equals(columnNames, tableData.columnNames) &&
+                Objects.equals(data, tableData.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(table, columnNames, data);
     }
 }

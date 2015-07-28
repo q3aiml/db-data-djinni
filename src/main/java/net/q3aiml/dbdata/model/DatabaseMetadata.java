@@ -40,8 +40,12 @@ public class DatabaseMetadata {
 
     public Table addTable(String schemaName, String tableName) {
         Table table = new Table(schemaName, tableName);
-        schemaName = normalizeName(schemaName);
-        tableName = normalizeName(tableName);
+        return addTable(table);
+    }
+
+    public Table addTable(Table table) {
+        String schemaName = normalizeName(table.schema);
+        String tableName = normalizeName(table.name);
         tablesByName.put(qualifiedTableName(schemaName, tableName), table);
         graph.addVertex(table);
         return table;
@@ -65,14 +69,17 @@ public class DatabaseMetadata {
     }
 
     public Set<TableToTableReference> referringTo(Table table) {
+        checkNotNull(table, "table must not be null");
         return graph.incomingEdgesOf(table);
     }
 
     public Set<TableToTableReference> referredToBy(Table table) {
+        checkNotNull(table, "table must not be null");
         return graph.outgoingEdgesOf(table);
     }
 
     public Set<TableToTableReference> references(Table table) {
+        checkNotNull(table, "table must not be null");
         return graph.edgesOf(table);
     }
 

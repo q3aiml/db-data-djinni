@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.q3aiml.dbdata.DataSpec;
 import net.q3aiml.dbdata.config.DatabaseConfig;
 import net.q3aiml.dbdata.introspect.DefaultDatabaseIntrospector;
+import net.q3aiml.dbdata.jdbc.TableDataQueryer;
+import net.q3aiml.dbdata.jdbc.UnpreparedStatement;
 import net.q3aiml.dbdata.model.*;
 import net.q3aiml.dbdata.morph.KeyResolver;
 import net.q3aiml.dbdata.morph.SortDataSpec;
@@ -14,21 +16,29 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.IntStream;
-
-import static java.util.stream.Collectors.joining;
 
 public class Exporter {
     protected final DataSource dataSource;
     protected final DatabaseConfig config;
     protected final DefaultDatabaseIntrospector introspector;
+    protected final ReferencedDataLookup referencedDataLookup;
+    protected final TableDataQueryer tableDataQueryer;
     protected DatabaseMetadata db;
     private boolean noTableReferenceLoops = true;
 
     public Exporter(DataSource dataSource, DatabaseConfig config) {
+        this(dataSource, config, new DefaultDatabaseIntrospector(config.schema), new ReferencedDataLookup(),
+                new TableDataQueryer());
+    }
+
+    public Exporter(DataSource dataSource, DatabaseConfig config, DefaultDatabaseIntrospector introspector,
+                    ReferencedDataLookup referencedDataLookup, TableDataQueryer tableDataQueryer)
+    {
         this.dataSource = dataSource;
         this.config = config;
-        introspector = new DefaultDatabaseIntrospector(config.schema);
+        this.introspector = introspector;
+        this.referencedDataLookup = referencedDataLookup;
+        this.tableDataQueryer = tableDataQueryer;
     }
 
     public String extractAndSerialize(String startTable, String startQuery)
@@ -51,7 +61,7 @@ public class Exporter {
             Deque<TableData> tableDatas = new ArrayDeque<>();
             tableDatas.addLast(startData);
             Set<String> visited = new HashSet<>();
-            visited.add(startData.table.schema + "." + startData.table.name);
+            visited.add(startData.table().schema + "." + startData.table().name);
             while (!tableDatas.isEmpty()) {
                 TableData tableData = tableDatas.removeFirst();
                 allDatas.add(tableData);
@@ -73,25 +83,30 @@ public class Exporter {
         }
     }
 
-    public DataSpec serialize(List<TableData> allDatas, DatabaseConfig databaseConfig) throws JsonProcessingException {
+    protected DataSpec toDataSpec(Iterable<TableData> tableDatas, DatabaseConfig databaseConfig) {
         DataSpec dataSpec = new DataSpec();
-        for (TableData data : allDatas) {
+        for (TableData data : tableDatas) {
             for (int row = 0; row < data.rowCount(); row++) {
-                DataSpec.DataSpecRow magicRow = new DataSpec.DataSpecRow();
-                magicRow.setTable(data.table.schema + "." + data.table.name);
+                DataSpec.DataSpecRow dataSpecRow = new DataSpec.DataSpecRow();
+                dataSpecRow.setTable(data.table().schema + "." + data.table().name);
 
                 for (int column = 0; column < data.columnNames.length; column++) {
                     String columnName = data.columnNames[column];
                     String value = data.data(row, column);
 
                     if (!databaseConfig.isIgnored(columnName)) {
-                        magicRow.getRow().put(columnName, value);
+                        dataSpecRow.getRow().put(columnName, value);
                     }
                 }
 
-                dataSpec.tableRows.add(magicRow);
+                dataSpec.tableRows.add(dataSpecRow);
             }
         }
+        return dataSpec;
+    }
+
+    public DataSpec serialize(List<TableData> allDatas, DatabaseConfig databaseConfig) throws JsonProcessingException {
+        DataSpec dataSpec = toDataSpec(allDatas, databaseConfig);
 
         KeyResolver keyResolver = new KeyResolver();
         keyResolver.toReferences(dataSpec, db);
@@ -101,53 +116,32 @@ public class Exporter {
         return dataSpec;
     }
 
-    public List<TableData> extractFollowReferences(Connection c, DatabaseMetadata db, TableData tableData, Set<String> visited) throws SQLException {
+    public List<TableData> extractFollowReferences(Connection c, DatabaseMetadata db, TableData tableData,
+                                                   Set<String> visited)
+            throws SQLException
+    {
         List<TableData> foundData = new ArrayList<>();
-        for (TableToTableReference reference : db.references(tableData.table)) {
+        for (TableToTableReference reference : db.references(tableData.table())) {
             if (reference instanceof ForeignKeyReference) {
                 ForeignKeyReference fk = (ForeignKeyReference)reference;
-                Table otherTable;
-                List<String> otherColumns;
-                List<String> ourColumns;
-                if (fk.getReferencedTable() == tableData.table) {
-                    ourColumns = fk.getReferencedColumns();
-                    otherTable = fk.getReferencingTable();
-                    otherColumns = fk.getReferencingColumns();
-                } else {
-                    ourColumns = fk.getReferencingColumns();
-                    otherTable = fk.getReferencedTable();
-                    otherColumns = fk.getReferencedColumns();
-                }
+                ReferencedDataLookupInfo lookupInfo = new ReferencedDataLookupInfo(fk, tableData.table());
 
                 if (noTableReferenceLoops) {
-                    String visitKey = otherTable.schema + "." + otherTable.name;
+                    String visitKey = lookupInfo.otherTable.schema + "." + lookupInfo.otherTable.name;
                     if (visited.contains(visitKey)) {
                         continue;
                     }
                     visited.add(visitKey);
                 }
 
-                String sql = "SELECT * FROM " + otherTable.schema + "." + otherTable.name + " WHERE "
-                        + otherColumns.stream().map(col -> col + " = ?").collect(joining(" AND "));
-                try (PreparedStatement ps = c.prepareStatement(sql)) {
-                    for (int i = 0; i < tableData.rowCount(); i++) {
-                        int iRow = i;
-                        String visitKeyData = IntStream.range(0, otherColumns.size())
-                                .mapToObj(iCol -> otherColumns.get(iCol) + "=" + tableData.data(iRow, ourColumns.get(iCol)))
-                                .collect(joining(","));
-                        String visitKey = otherTable.schema + "." + otherTable.name + "." + visitKeyData;
+                for (int row = 0; row < tableData.rowCount(); row++) {
+                    UnpreparedStatement query = referencedDataLookup.query(lookupInfo, tableData, row);
+                    String visitKey = query.toString();
 
-                        if (!visited.contains(visitKey)) {
-                            visited.add(visitKey);
-                            int iCol = 1;
-                            for (String ourColumn : ourColumns) {
-                                ps.setString(iCol++, tableData.data(i, ourColumn));
-                            }
-                            try (ResultSet rs = ps.executeQuery()) {
-                                TableData tableData1 = TableData.copyOfResultSet(otherTable, rs);
-                                foundData.add(tableData1);
-                            }
-                        }
+                    if (!visited.contains(visitKey)) {
+                        visited.add(visitKey);
+                        TableData lookedUpData = tableDataQueryer.execute(c, query, lookupInfo.otherTable);
+                        foundData.add(lookedUpData);
                     }
                 }
             } else {
