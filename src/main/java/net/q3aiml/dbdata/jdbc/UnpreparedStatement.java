@@ -1,24 +1,22 @@
 package net.q3aiml.dbdata.jdbc;
 
-import com.google.common.collect.ImmutableList;
-
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class UnpreparedStatement {
     private final String sql;
-    private final ImmutableList<?> values;
+    private final List<?> values;
 
     public UnpreparedStatement(String sql, List<?> values) {
         this.sql = sql;
-        this.values = ImmutableList.copyOf(values);
+        // must be a null friendly collection
+        this.values = Collections.unmodifiableList(new ArrayList<>(values));
     }
 
     public String sql() {
         return sql;
     }
 
-    public ImmutableList<?> values() {
+    public List<?> values() {
         return values;
     }
 
