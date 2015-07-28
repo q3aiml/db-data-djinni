@@ -1,5 +1,6 @@
 package net.q3aiml.dbdata.util;
 
+import javax.inject.Provider;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -21,6 +22,18 @@ public class MoreCollectors {
             Function<? super T, ? extends U> valueMapper)
     {
         return new CollectorImpl<>(HashMap::new,
+                uniqKeysMapAccumulator(keyMapper, valueMapper),
+                uniqKeysMapMerger(),
+                CH_ID);
+    }
+
+    public static <T, K, U>
+    Collector<T, ?, Map<K,U>> toMap(
+            Function<? super T, ? extends K> keyMapper,
+            Function<? super T, ? extends U> valueMapper,
+            Supplier<Map<K, U>> mapSupplier)
+    {
+        return new CollectorImpl<>(mapSupplier,
                 uniqKeysMapAccumulator(keyMapper, valueMapper),
                 uniqKeysMapMerger(),
                 CH_ID);
