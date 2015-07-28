@@ -24,6 +24,12 @@ import static java.util.stream.Collectors.joining;
 public class DataSpec {
     public List<DataSpecRow> tableRows = new ArrayList<>();
 
+    public DataSpec() { }
+
+    public DataSpec(List<DataSpecRow> tableRows) {
+        this.tableRows = tableRows;
+    }
+
     public static DataSpec fromYaml(String serializedConfig) {
         return new Yaml().loadAs(serializedConfig, DataSpec.class);
     }
@@ -44,7 +50,8 @@ public class DataSpec {
                 if (propertyOrder != null) {
                     Ordering<Property> propertyOrdering = Ordering.explicit(propertyOrder)
                             .onResultOf(Property::getName);
-                    return propertySet.stream().sorted(propertyOrdering).collect(Collectors.toSet());
+                    return propertySet.stream().sorted(propertyOrdering)
+                            .collect(Collectors.toCollection(LinkedHashSet::new));
                 } else {
                     return propertySet;
                 }
@@ -139,6 +146,13 @@ public class DataSpec {
     }
 
     public static class DataSpecRow {
+        public DataSpecRow() { }
+
+        public DataSpecRow(String tableName, Map<String, Object> rowValues) {
+            this.tableName = tableName;
+            this.rowValues = rowValues;
+        }
+
         private String tableName;
         private Map<String, Object> rowValues = new LinkedHashMap<>();
 

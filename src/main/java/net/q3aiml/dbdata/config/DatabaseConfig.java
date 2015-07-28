@@ -25,7 +25,7 @@ public class DatabaseConfig {
     public DatabaseTableConfig globalConfig;
 
     @JsonProperty("rekeyer")
-    public RekeyerConfig rekeyer;
+    public RekeyerConfig rekeyer = new RekeyerConfig();
 
     public boolean isIgnored(String columnName) {
         return globalConfig.omitColumns.stream().map(String::toLowerCase).anyMatch(s -> s.equals(columnName.toLowerCase()));

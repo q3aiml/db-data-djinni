@@ -1,0 +1,25 @@
+tableRows:
+- &user-truffles
+  table: user
+  row:
+    name: truffles
+- &user-radicchio
+  table: user
+  row:
+    name: radicchio
+- &group
+  table: group
+  row:
+    name: PELLETS
+- &group-2
+  table: group
+  row:
+    name: chicory
+- table: group_user
+  row:
+    user_fk: *user-truffles
+    group_fk: *group
+- table: group_user
+  row:
+    user_fk: *user-radicchio
+    group_fk: *group-2
