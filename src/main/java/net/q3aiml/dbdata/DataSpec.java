@@ -1,9 +1,6 @@
 package net.q3aiml.dbdata;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.*;
 import net.q3aiml.dbdata.config.DatabaseConfig;
 import net.q3aiml.dbdata.config.RekeyerConfig;
 import net.q3aiml.dbdata.util.MoreCollectors;
@@ -16,6 +13,9 @@ import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.Tag;
 
 import java.beans.IntrospectionException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -151,6 +151,16 @@ public class DataSpec {
         public DataSpecRow(String tableName, Map<String, Object> rowValues) {
             this.tableName = tableName;
             this.rowValues = rowValues;
+        }
+
+        public static DataSpecRow copyOfResultSetAsStrings(String tableName, ResultSet rs) throws SQLException {
+            ResultSetMetaData metaData = rs.getMetaData();
+            // must be a null friendly collection
+            Map<String, Object> values = new LinkedHashMap<>();
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                values.put(metaData.getColumnName(i), rs.getString(i));
+            }
+            return new DataSpecRow(tableName, values);
         }
 
         private String tableName;

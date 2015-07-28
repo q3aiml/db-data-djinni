@@ -7,6 +7,7 @@ import com.google.common.io.Resources;
 import net.q3aiml.dbdata.DataSpec;
 import net.q3aiml.dbdata.config.DatabaseConfig;
 import net.q3aiml.dbdata.introspect.DefaultDatabaseIntrospector;
+import net.q3aiml.dbdata.verify.VerificationError;
 import net.q3aiml.dbdata.verify.Verifier;
 
 import javax.sql.DataSource;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 @Command(name = "verify", description = "Verify database matches data in a file")
@@ -41,7 +43,14 @@ public class VerifyCli implements Callable<Void> {
 
         DefaultDatabaseIntrospector introspector = new DefaultDatabaseIntrospector(serializeConfig.schema);
         Verifier verifier = new Verifier(introspector);
-        verifier.verify(dataSource, dataSpec, serializeConfig);
+        List<VerificationError> errors = verifier.verify(dataSource, dataSpec, serializeConfig);
+
+        if (errors.isEmpty()) {
+            System.out.println("verification passed");
+        } else {
+            System.out.println("verification failed " + errors);
+            System.exit(1);
+        }
 
         return null;
     }

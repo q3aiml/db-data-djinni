@@ -5,6 +5,7 @@ import org.mockito.stubbing.Answer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mockito.Matchers.anyInt;
@@ -43,6 +44,9 @@ public final class JdbcMock {
             } else if (arg instanceof String) {
                 //noinspection SuspiciousMethodCalls
                 column = columnNames.indexOf(arg);
+                if (column == -1) {
+                    throw new NoSuchElementException("no column " + arg + ", have " + columnNames);
+                }
             } else {
                 throw new IllegalArgumentException("unexpected arg " + arg.getClass());
             }

@@ -12,7 +12,7 @@ public class DatabaseConfigOption {
     @Option(name = "-t", title = "database-config-file", description = "database config file", required = true)
     public File databaseConfigFile;
 
-    public DatabaseConfig serializeConfig() throws IOException {
+    public DatabaseConfig databaseConfig() throws IOException {
         try {
             String content = Files.toString(databaseConfigFile, Charset.defaultCharset());
             return DatabaseConfig.fromYaml(content);

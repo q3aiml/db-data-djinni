@@ -25,7 +25,7 @@ public class ExportCli implements Callable<Void> {
     @Override
     public Void call() throws IOException, SQLException {
         DataSource dataSource = sqlConnectionOption.dataSource();
-        DatabaseConfig config = databaseConfigOption.serializeConfig();
+        DatabaseConfig config = databaseConfigOption.databaseConfig();
 
         Exporter exporter = new Exporter(dataSource, config);
         String yaml = exporter.extractAndSerialize(startTableQuery.get(0), startTableQuery.get(1));

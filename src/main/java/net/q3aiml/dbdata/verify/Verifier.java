@@ -24,78 +24,60 @@ public class Verifier {
         this.introspector = introspector;
     }
 
-    public void verify(DataSource dataSource, DataSpec magic, DatabaseConfig config) throws SQLException {
+    public List<VerificationError> verify(DataSource dataSource, DataSpec dataSpec, DatabaseConfig config)
+            throws SQLException
+    {
         try (Connection c = dataSource.getConnection()) {
-            DatabaseMetadata db = new DatabaseMetadata();
-            introspector.loadTables(c, db);
-            introspector.loadTablePrimaryKeyInfo(c, db);
-            introspector.loadTableUniqueInfo(c, db);
-            introspector.loadReferences(c, db);
-
-            rekeyer.rekey(magic, c, config.rekeyer, db);
-            keyResolver.toKeys(magic, db);
-
-            verify(c, magic, db);
+            return verify(c, dataSpec, config);
         }
     }
 
-    public void verify(Connection c, DataSpec magic, DatabaseMetadata db) throws SQLException {
-        List<VerificationError> errors = new ArrayList<>();
+    public List<VerificationError> verify(Connection c, DataSpec dataSpec, DatabaseConfig config) throws SQLException {
+        DatabaseMetadata db = new DatabaseMetadata();
+        introspector.loadTables(c, db);
+        introspector.loadTablePrimaryKeyInfo(c, db);
+        introspector.loadTableUniqueInfo(c, db);
+        introspector.loadReferences(c, db);
+        return verify(c, dataSpec, config, db);
+    }
 
-        for (DataSpec.DataSpecRow row : magic.tableRows) {
-            Set<Set<String>> availableUniqueColumnSets = db.tableByNameNoCreate(row.getTable()).uniqueInfo()
-                    .findAvailableUniqueColumnSets(row.getRow().keySet());
+    public List<VerificationError> verify(Connection c, DataSpec dataSpec, DatabaseConfig config, DatabaseMetadata db) throws SQLException {
+        rekeyer.rekey(dataSpec, c, config.rekeyer, db);
+        keyResolver.toKeys(dataSpec, db);
+
+        List<VerificationError> errors = new ArrayList<>();
+        for (DataSpec.DataSpecRow expectedRow : dataSpec.tableRows) {
+            Set<Set<String>> availableUniqueColumnSets = db.tableByNameNoCreate(expectedRow.getTable()).uniqueInfo()
+                    .findAvailableUniqueColumnSets(expectedRow.getRow().keySet());
             Set<String> uniqueColumnSet = availableUniqueColumnSets.iterator().next();
             String where = uniqueColumnSet.stream()
                     .map(s -> s + " = ?")
                     .collect(Collectors.joining(" AND "));
-            String sql = "select * from " + row.getTable() + " where " + where;
+            String sql = "select * from " + expectedRow.getTable() + " where " + where;
             try (PreparedStatement ps = c.prepareStatement(sql)) {
                 int columnIndex = 1;
                 for (String column : uniqueColumnSet) {
-                    String value = (String)row.getRow().get(column);
+                    String value = (String)expectedRow.getRow().get(column);
                     ps.setString(columnIndex++, value);
                 }
 
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        for (Map.Entry<String, Object> entry : row.getRow().entrySet()) {
+                        for (Map.Entry<String, Object> entry : expectedRow.getRow().entrySet()) {
                             String actualValue = rs.getString(entry.getKey());
                             if (!Objects.equals(actualValue, entry.getValue())) {
-                                errors.add(new VerificationError(VerificationError.Type.VALUE_MISMATCH, row, entry.getKey()));
+                                DataSpec.DataSpecRow actualRow =
+                                        DataSpec.DataSpecRow.copyOfResultSetAsStrings(expectedRow.getTable(), rs);
+                                errors.add(new VerificationError(VerificationError.Type.VALUE_MISMATCH, actualRow,
+                                        expectedRow, entry.getKey()));
                             }
                         }
                     } else {
-                        errors.add(new VerificationError(VerificationError.Type.MISSING_ROW, row, null));
+                        errors.add(new VerificationError(VerificationError.Type.MISSING_ROW, null, expectedRow, null));
                     }
                 }
             }
         }
-        if (errors.isEmpty()) {
-            System.out.println("verification passed");
-        } else {
-            System.out.println("verification failed " + errors);
-        }
-    }
-
-    private static class VerificationError {
-        String message;
-        public VerificationError(Type type, DataSpec.DataSpecRow row, String column) {
-            if (type == Type.MISSING_ROW) {
-                message = "missing row " + row;
-            } else {
-                message = "mismatch on " + column + " in " + row;
-            }
-        }
-
-        public enum Type {
-            MISSING_ROW,
-            VALUE_MISMATCH
-        }
-
-        @Override
-        public String toString() {
-            return message;
-        }
+        return errors;
     }
 }
