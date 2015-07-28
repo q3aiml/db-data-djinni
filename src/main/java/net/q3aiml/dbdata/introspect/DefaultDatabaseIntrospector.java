@@ -100,7 +100,7 @@ public class DefaultDatabaseIntrospector {
                                 primaryKeyTable, primaryKeyColumns,
                                 foreignKeyTable, foreignKeyColumns);
                         if (primaryKeyColumns.size() == 1) {
-                            db.addReference(foreignKeyTable, primaryKeyTable, reference);
+                            db.addReference(reference);
                         }
                     });
         }

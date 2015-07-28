@@ -17,11 +17,9 @@ public class KeyResolverTest {
         DatabaseMetadata db = new DatabaseMetadata();
         Table referredTo = db.addTable(null, "REFERRED_TO");
         Table referringTo = db.addTable(null, "REFERRING_TO");
-        db.addReference(referringTo, referredTo, new ForeignKeyReference(
-                referredTo, asList("ID"), referringTo, asList("REF_ID")));
+        db.addReference(new ForeignKeyReference(referredTo, asList("ID"), referringTo, asList("REF_ID")));
         // should be able to have multiple foreign keys pointing to the same thing without blowups
-        db.addReference(referringTo, referredTo, new ForeignKeyReference(
-                referredTo, asList("ID"), referringTo, asList("REF2_ID")));
+        db.addReference(new ForeignKeyReference(referredTo, asList("ID"), referringTo, asList("REF2_ID")));
 
         DataSpec config = new DataSpec();
 

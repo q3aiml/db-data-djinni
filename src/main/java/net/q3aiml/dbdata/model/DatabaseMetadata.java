@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class DatabaseMetadata {
     DirectedGraph<Table, TableToTableReference> graph = new DirectedPseudograph<>(TableToTableReference.class);
     Map<String, Table> tablesByName = new HashMap<>();
@@ -57,12 +59,9 @@ public class DatabaseMetadata {
         return graph;
     }
 
-    public void addReference(Table from, Table to, TableToTableReference reference) {
-        if (reference == null) {
-            graph.addEdge(from, to);
-        } else {
-            graph.addEdge(from, to, reference);
-        }
+    public void addReference(TableToTableReference reference) {
+        checkNotNull(reference, "reference must not be null");
+        graph.addEdge(reference.getReferencingTable(), reference.getReferencedTable(), reference);
     }
 
     public Set<TableToTableReference> referringTo(Table table) {
