@@ -24,6 +24,8 @@ import java.util.concurrent.Callable;
 public class VerifyCli implements Callable<Void> {
     @Inject
     SqlConnectionOption sqlConnectionOption = new SqlConnectionOption();
+    @Inject
+    DatabaseConfigOption databaseConfigOption;
 
     @Arguments
     public File file;
@@ -39,9 +41,7 @@ public class VerifyCli implements Callable<Void> {
         DataSpec dataSpec = DataSpec.fromYaml(yaml);
 
         DataSource dataSource = sqlConnectionOption.dataSource();
-
-        DatabaseConfig serializeConfig = DatabaseConfig
-                .fromYaml(Resources.toString(Resources.getResource("config.yaml"), StandardCharsets.UTF_8));
+        DatabaseConfig serializeConfig = databaseConfigOption.databaseConfig();
 
         DefaultDatabaseIntrospector introspector = new DefaultDatabaseIntrospector(serializeConfig.schema);
         Verifier verifier = new Verifier(introspector);
