@@ -20,13 +20,14 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.RETURNS_SMART_NULLS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 public class ExporterTest {
     DataSource dataSource = mock(DataSource.class);
-    Connection c = mock(Connection.class);
+    Connection c = mock(Connection.class, RETURNS_SMART_NULLS);
     DatabaseConfig config = new DatabaseConfig();
     DefaultDatabaseIntrospector introspector = mock(DefaultDatabaseIntrospector.class);
     ReferencedDataLookup lookup = mock(ReferencedDataLookup.class);
