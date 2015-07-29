@@ -19,5 +19,7 @@ public class UnpreparedStatementTest {
     public void unsafeUnparameterizedSqlTest() {
         UnpreparedStatement unpreparedStatement = new UnpreparedStatement("test ? wee ?", asList("1", "2"));
         assertEquals("test '1' wee '2'", unpreparedStatement.unsafeUnparameterizedSql());
+        UnpreparedStatement unpreparedStatement2 = new UnpreparedStatement("test ? wee ?", asList("$1", "2"));
+        assertEquals("test '$1' wee '2'", unpreparedStatement2.unsafeUnparameterizedSql());
     }
 }

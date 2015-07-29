@@ -34,7 +34,7 @@ public class UnpreparedStatement {
             } else {
                 stringValue = "'" + value.toString().replace("'", "''") + "'";
             }
-            m.appendReplacement(buf, stringValue);
+            m.appendReplacement(buf, Matcher.quoteReplacement(stringValue));
         }
         m.appendTail(buf);
         return buf.toString();
