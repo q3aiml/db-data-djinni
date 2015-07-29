@@ -10,6 +10,7 @@ import net.q3aiml.dbdata.introspect.DefaultDatabaseIntrospector;
 import net.q3aiml.dbdata.verify.VerificationError;
 import net.q3aiml.dbdata.verify.Verifier;
 
+import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.util.concurrent.Callable;
 
 @Command(name = "verify", description = "Verify database matches data in a file")
 public class VerifyCli implements Callable<Void> {
+    @Inject
     SqlConnectionOption sqlConnectionOption = new SqlConnectionOption();
 
     @Arguments
