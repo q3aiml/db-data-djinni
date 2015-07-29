@@ -19,8 +19,8 @@ public class DatabaseConfigOption {
             String content = Files.toString(databaseConfigFile, Charset.defaultCharset());
             return DatabaseConfig.fromYaml(content);
         } catch (IOException e) {
-            throw new IOException("error reading database config file " + databaseConfigFile.getAbsolutePath()
-                    + ": " + e.getMessage(), e);
+            throw new InvalidArgumentException("error reading database config file "
+                    + databaseConfigFile.getAbsolutePath() + ": " + e.getMessage(), e);
         }
     }
 }

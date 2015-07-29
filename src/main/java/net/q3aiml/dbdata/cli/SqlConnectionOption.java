@@ -22,8 +22,8 @@ public class SqlConnectionOption {
             String content = Files.toString(sqlConnectionFile, Charset.defaultCharset());
             connectionInfo = SqlConnectionInfo.fromYaml(content);
         } catch (IOException e) {
-            throw new IOException("error reading sql connection file " + sqlConnectionFile.getAbsolutePath()
-                    + ": " + e.getMessage(), e);
+            throw new InvalidArgumentException("error reading sql connection file "
+                    + sqlConnectionFile.getAbsolutePath() + ": " + e.getMessage(), e);
         }
         return DataSources.toDataSource(connectionInfo);
     }

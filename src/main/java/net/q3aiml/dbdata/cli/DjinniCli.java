@@ -19,7 +19,7 @@ public class DjinniCli {
 
         try {
             builder.build().parse(args).call();
-        } catch (ParseArgumentsMissingException | ParseOptionMissingException e) {
+        } catch (ParseArgumentsMissingException | ParseOptionMissingException | InvalidArgumentException e) {
             System.err.println(e.getMessage());
             System.exit(3);
         }
