@@ -13,10 +13,10 @@ import static java.util.stream.Collectors.toList;
  */
 /*package*/ class ReferencedDataLookup {
     /**
-     * sql (following "SELECT ... FROM") to lookup data on the other side of {@code referencingTable}
+     * sql to lookup data on the other side of {@code referencingTable}
      */
     protected static String sql(ReferencedDataLookupInfo info) {
-        return info.otherTable.schema + "." + info.otherTable.name + " WHERE "
+        return "SELECT * FROM " + info.otherTable.schema + "." + info.otherTable.name + " WHERE "
                 + info.otherColumns.stream().map(col -> col + " = ?").collect(joining(" AND "));
     }
 

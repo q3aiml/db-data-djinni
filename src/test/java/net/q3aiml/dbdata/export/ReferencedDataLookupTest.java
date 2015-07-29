@@ -31,19 +31,19 @@ public class ReferencedDataLookupTest {
                 asList("user_pk"), asList("user_fk"));
 
         UnpreparedStatement query1 = lookup.query(groupLookupInfo, groupUserData, 0);
-        assertEquals("schema.group WHERE group_pk = ?", query1.sql());
+        assertEquals("SELECT * FROM schema.group WHERE group_pk = ?", query1.sql());
         assertEquals(asList("group1"), query1.values());
 
         UnpreparedStatement query2 = lookup.query(groupLookupInfo, groupUserData, 1);
-        assertEquals("schema.group WHERE group_pk = ?", query2.sql());
+        assertEquals("SELECT * FROM schema.group WHERE group_pk = ?", query2.sql());
         assertEquals(asList("group1"), query2.values());
 
         UnpreparedStatement query3 = lookup.query(groupLookupInfo, groupUserData, 2);
-        assertEquals("schema.group WHERE group_pk = ?", query3.sql());
+        assertEquals("SELECT * FROM schema.group WHERE group_pk = ?", query3.sql());
         assertEquals(asList("group2"), query3.values());
 
         UnpreparedStatement query4 = lookup.query(userLookupInfo, groupUserData, 1);
-        assertEquals("schema.group WHERE user_pk = ?", query4.sql());
+        assertEquals("SELECT * FROM schema.group WHERE user_pk = ?", query4.sql());
         assertEquals(asList("user2"), query4.values());
     }
 }
