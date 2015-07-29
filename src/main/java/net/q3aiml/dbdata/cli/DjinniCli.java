@@ -10,7 +10,7 @@ import static java.util.Arrays.asList;
 
 public class DjinniCli {
     public static void main(String... args) throws Exception {
-        CliBuilder<Callable<Void>> builder = Cli.<Callable<Void>>builder("magic")
+        CliBuilder<Callable<Void>> builder = Cli.<Callable<Void>>builder("djinni")
                 .withDescription("tooling for testing of legacy databases")
                 .withCommands(asList(Help.class, ExportCli.class, VerifyCli.class, ImportCli.class))
                 .withDefaultCommand(Help.class);
