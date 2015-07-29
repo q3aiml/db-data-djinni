@@ -40,7 +40,7 @@ public class Importer {
                     if (verifyError.type() == VerificationError.Type.VALUE_MISMATCH) {
                         return modifySql.updateSql(verifyError.expectedRow(), db);
                     } else if (verifyError.type() == VerificationError.Type.MISSING_ROW) {
-                        return modifySql.deleteSql(verifyError.expectedRow(), db);
+                        return modifySql.insertSql(verifyError.expectedRow(), db);
                     } else {
                         throw new UnsupportedOperationException("unexpected verify error type " + verifyError);
                     }

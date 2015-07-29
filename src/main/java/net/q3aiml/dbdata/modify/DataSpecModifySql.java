@@ -12,6 +12,14 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 public class DataSpecModifySql {
+    public UnpreparedStatement insertSql(DataSpec.DataSpecRow row, DatabaseMetadata db) {
+        Map<String, Object> values = row.getRow();
+        String columns = values.keySet().stream().collect(joining(", "));
+        String valuePlaceholders = Collections.nCopies(values.size(), "?").stream().collect(joining(", "));
+        String sql = "insert into " + row.getTable() + " (" + columns + ") values (" + valuePlaceholders + ")";
+        return new UnpreparedStatement(sql, new ArrayList<>(values.values()));
+    }
+
     public UnpreparedStatement deleteSql(DataSpec.DataSpecRow row, DatabaseMetadata db) {
         String tableName = row.getTable();
         Map<String, Object> columnValues = row.getRow();
