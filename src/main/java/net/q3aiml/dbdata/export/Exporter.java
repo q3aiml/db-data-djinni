@@ -94,7 +94,7 @@ public class Exporter {
                     String columnName = data.columnNames[column];
                     String value = data.data(row, column);
 
-                    if (!databaseConfig.isIgnored(columnName)) {
+                    if (!databaseConfig.isIgnored(data.table(), columnName)) {
                         dataSpecRow.getRow().put(columnName, value);
                     }
                 }
