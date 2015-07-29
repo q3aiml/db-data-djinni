@@ -1,6 +1,7 @@
 package net.q3aiml.dbdata.cli;
 
 import com.github.rvesse.airline.Option;
+import com.github.rvesse.airline.OptionType;
 import com.google.common.io.Files;
 import net.q3aiml.dbdata.config.SqlConnectionInfo;
 import net.q3aiml.dbdata.jdbc.DataSources;
@@ -11,7 +12,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class SqlConnectionOption {
-    @Option(name = "-c", title = "sql-connection-file", description = "sql connection file", required = true)
+    @Option(name = "-c", type = OptionType.GLOBAL, title = "sql-connection-file",
+            description = "file containing database connection info", required = true)
     public File sqlConnectionFile;
 
     public DataSource dataSource() throws IOException {
