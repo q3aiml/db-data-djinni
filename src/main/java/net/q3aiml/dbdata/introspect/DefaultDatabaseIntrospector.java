@@ -79,30 +79,31 @@ public class DefaultDatabaseIntrospector {
     }
 
     public void loadReferences(Connection connection, DatabaseMetadata db) throws SQLException {
-        try (ResultSet references = connection.getMetaData().getCrossReference(null, null, null, null, desiredSchema, null)) {
-            // already ordered by KEY_SEQ
-            SQL.seq(references, ResultSets.toMap(references.getMetaData()))
-                    .groupBy(row -> row.get("FKTABLE_SCHEM") + "." + row.get("FKTABLE_NAME") + "." + row.get("FK_NAME"))
-                    .values()
-                    .forEach(rows -> {
-                        Map<String, String> firstRow = rows.get(0);
-                        String primaryKeySchema = firstRow.get("PKTABLE_SCHEM");
-                        String primaryKeyTableName = firstRow.get("PKTABLE_NAME");
-                        String foreignKeySchema = firstRow.get("FKTABLE_SCHEM");
-                        String foreignKeyTableName = firstRow.get("FKTABLE_NAME");
-                        Table primaryKeyTable = db.table(primaryKeySchema, primaryKeyTableName);
-                        Table foreignKeyTable = db.table(foreignKeySchema, foreignKeyTableName);
-                        List<String> primaryKeyColumns = rows.stream().map(row -> row.get("PKCOLUMN_NAME"))
-                                .collect(Collectors.toList());
-                        List<String> foreignKeyColumns = rows.stream().map(row -> row.get("FKCOLUMN_NAME"))
-                                .collect(Collectors.toList());
-                        ForeignKeyReference reference = new ForeignKeyReference(
-                                primaryKeyTable, primaryKeyColumns,
-                                foreignKeyTable, foreignKeyColumns);
-                        if (primaryKeyColumns.size() == 1) {
-                            db.addReference(reference);
-                        }
-                    });
+        for (Table table : db.tables()) {
+            try (ResultSet references = connection.getMetaData().getImportedKeys(null, table.schema, table.name)) {
+                SQL.seq(references, ResultSets.toMap(references.getMetaData()))
+                        .groupBy(row -> row.get("FKTABLE_SCHEM") + "." + row.get("FKTABLE_NAME") + "." + row.get("FK_NAME"))
+                        .values()
+                        .forEach(rows -> {
+                            Map<String, String> firstRow = rows.get(0);
+                            String primaryKeySchema = firstRow.get("PKTABLE_SCHEM");
+                            String primaryKeyTableName = firstRow.get("PKTABLE_NAME");
+                            String foreignKeySchema = firstRow.get("FKTABLE_SCHEM");
+                            String foreignKeyTableName = firstRow.get("FKTABLE_NAME");
+                            Table primaryKeyTable = db.table(primaryKeySchema, primaryKeyTableName);
+                            Table foreignKeyTable = db.table(foreignKeySchema, foreignKeyTableName);
+                            List<String> primaryKeyColumns = rows.stream().map(row -> row.get("PKCOLUMN_NAME"))
+                                    .collect(Collectors.toList());
+                            List<String> foreignKeyColumns = rows.stream().map(row -> row.get("FKCOLUMN_NAME"))
+                                    .collect(Collectors.toList());
+                            ForeignKeyReference reference = new ForeignKeyReference(
+                                    primaryKeyTable, primaryKeyColumns,
+                                    foreignKeyTable, foreignKeyColumns);
+                            if (primaryKeyColumns.size() == 1) {
+                                db.addReference(reference);
+                            }
+                        });
+            }
         }
     }
 }

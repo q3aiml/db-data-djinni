@@ -1,0 +1,13 @@
+---
+schema: PUBLIC
+rekeyer:
+  alt_keys:
+    PUBLIC.RABBIT:
+      - NAME
+    PUBLIC.HUMAN:
+      - NAME
+    PUBLIC.BREED:
+      - NAME
+    PUBLIC.RABBIT_HUMAN:
+      - RABBIT_FK
+      - HUMAN_FK

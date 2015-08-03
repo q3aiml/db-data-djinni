@@ -1,0 +1,18 @@
+tableRows:
+- &breed-lionlop
+  table: PUBLIC.BREED
+  row:
+    NAME: LionLop
+- &human-andy
+  table: PUBLIC.HUMAN
+  row:
+    NAME: Andy
+- &rabbit-truffles
+  table: PUBLIC.RABBIT
+  row:
+    NAME: Truffles
+    BREED_FK: *breed-lionlop
+- table: PUBLIC.RABBIT_HUMAN
+  row:
+    RABBIT_FK: *rabbit-truffles
+    HUMAN_FK: *human-andy

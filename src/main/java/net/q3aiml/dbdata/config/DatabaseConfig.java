@@ -6,9 +6,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import net.q3aiml.dbdata.model.Table;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class DatabaseConfig {
@@ -21,10 +19,10 @@ public class DatabaseConfig {
     public String schema;
 
     @JsonProperty("tables")
-    public Map<String, DatabaseTableConfig> tableConfigs;
+    public Map<String, DatabaseTableConfig> tableConfigs = new HashMap<>();
 
     @JsonProperty("global")
-    public DatabaseTableConfig globalConfig;
+    public DatabaseTableConfig globalConfig = new DatabaseTableConfig();
 
     @JsonProperty("rekeyer")
     public RekeyerConfig rekeyer = new RekeyerConfig();

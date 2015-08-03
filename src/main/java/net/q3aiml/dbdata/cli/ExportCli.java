@@ -8,6 +8,7 @@ import net.q3aiml.dbdata.export.Exporter;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -22,6 +23,8 @@ public class ExportCli implements Callable<Void> {
     @Arguments(title = { "start-table", "start-query" }, required = true)
     public List<String> startTableQuery;
 
+    PrintStream out = System.out;
+
     @Override
     public Void call() throws IOException, SQLException {
         DataSource dataSource = sqlConnectionOption.dataSource();
@@ -29,7 +32,7 @@ public class ExportCli implements Callable<Void> {
 
         Exporter exporter = new Exporter(dataSource, config);
         String yaml = exporter.extractAndSerialize(startTableQuery.get(0), startTableQuery.get(1));
-        System.out.println(yaml);
+        out.println(yaml);
 
         return null;
     }
