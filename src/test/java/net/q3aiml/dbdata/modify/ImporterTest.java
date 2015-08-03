@@ -31,16 +31,16 @@ public class ImporterTest {
         DataSpec.DataSpecRow missingRow = mock(DataSpec.DataSpecRow.class, "missing row");
         DataSpec.DataSpecRow mismatchRow = mock(DataSpec.DataSpecRow.class, "mismatch row");
         DataSpec.DataSpecRow mismatchActualRow = mock(DataSpec.DataSpecRow.class);
-        VerificationError missingRowError = new VerificationError(VerificationError.Type.MISSING_ROW, null, missingRow, null);
+        VerificationError missingRowError = new VerificationError(VerificationError.Type.MISSING_ROW, null, missingRow);
         VerificationError valueMismatchError = new VerificationError(VerificationError.Type.VALUE_MISMATCH,
-                mismatchActualRow, mismatchRow, null);
+                mismatchActualRow, mismatchRow);
         when(verifier.verify(eq(c), eq(dataSpec), eq(config), any(DatabaseMetadata.class)))
                 .thenReturn(ImmutableList.of(missingRowError, valueMismatchError));
 
         importer.generateChangesToApplyDataSpecToDatabase(c, dataSpec, config);
 
         verify(modifySql).insertSql(eq(missingRow), any(DatabaseMetadata.class));
-        verify(modifySql).updateSql(eq(mismatchRow), any(DatabaseMetadata.class));
+        verify(modifySql).updateSql(eq(mismatchRow), eq(mismatchActualRow), any(DatabaseMetadata.class));
     }
 
 }

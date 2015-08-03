@@ -38,7 +38,7 @@ public class Importer {
         return verifyErrors.stream()
                 .map(verifyError -> {
                     if (verifyError.type() == VerificationError.Type.VALUE_MISMATCH) {
-                        return modifySql.updateSql(verifyError.expectedRow(), db);
+                        return modifySql.updateSql(verifyError.expectedRow(), verifyError.actualRow(), db);
                     } else if (verifyError.type() == VerificationError.Type.MISSING_ROW) {
                         return modifySql.insertSql(verifyError.expectedRow(), db);
                     } else {

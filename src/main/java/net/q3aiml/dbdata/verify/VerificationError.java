@@ -1,6 +1,11 @@
 package net.q3aiml.dbdata.verify;
 
 import net.q3aiml.dbdata.DataSpec;
+import net.q3aiml.dbdata.util.MoreCollectors;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -11,7 +16,7 @@ public class VerificationError {
     private String message;
 
     public VerificationError(
-            Type type, DataSpec.DataSpecRow actualRow, DataSpec.DataSpecRow expectedRow, String column)
+            Type type, DataSpec.DataSpecRow actualRow, DataSpec.DataSpecRow expectedRow)
     {
         this.type = type;
         this.actualRow = actualRow;
@@ -19,8 +24,17 @@ public class VerificationError {
         if (type == Type.MISSING_ROW) {
             message = "missing row " + expectedRow;
         } else {
-            message = "mismatch on " + column + " in " + expectedRow;
+            Map<String, Object> differences = diffRows(actualRow, expectedRow);
+            message = "mismatch values in " + actualRow.getTable() + ": " + differences
+                    + " (expected: " + expectedRow.getRow() + ", actual: " + actualRow.getRow() + ")";
         }
+    }
+
+    protected static Map<String, Object> diffRows(DataSpec.DataSpecRow actualRow, DataSpec.DataSpecRow expectedRow) {
+        return expectedRow.getRow().entrySet().stream()
+                .filter(desiredColumn -> !Objects.equals(desiredColumn.getValue(),
+                        actualRow.getRow().get(desiredColumn.getKey())))
+                .collect(MoreCollectors.toMap(Map.Entry::getKey, Map.Entry::getValue, LinkedHashMap::new));
     }
 
     public Type type() {

@@ -4,6 +4,7 @@ import net.q3aiml.dbdata.DataSpec;
 import net.q3aiml.dbdata.jdbc.UnpreparedStatement;
 import net.q3aiml.dbdata.model.DatabaseMetadata;
 import net.q3aiml.dbdata.model.UniqueInfo;
+import net.q3aiml.dbdata.util.MoreCollectors;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -33,16 +34,28 @@ public class DataSpecModifySql {
         return new UnpreparedStatement(sql, values);
     }
 
-    public UnpreparedStatement updateSql(DataSpec.DataSpecRow row, DatabaseMetadata db) {
-        String tableName = row.getTable();
-        Map<String, Object> columnValues = row.getRow();
-        Set<String> uniqueColumnSet = uniqueColumnSet(row, db);
-        String setClause =  columnValues.keySet().stream().map(column -> column + " = ?").collect(joining(" and "));
+    public UnpreparedStatement updateSql(
+            DataSpec.DataSpecRow desiredRow, DataSpec.DataSpecRow currentRow, DatabaseMetadata db)
+    {
+        String tableName = desiredRow.getTable();
+        Map<String, Object> columnValues = desiredRow.getRow();
+        Map<String, Object> changedValues;
+        if (currentRow == null) {
+            changedValues = columnValues;
+        } else {
+            changedValues = columnValues.entrySet().stream()
+                    .filter(desiredColumn -> !Objects.equals(desiredColumn.getValue(),
+                            currentRow.getRow().get(desiredColumn.getKey())))
+                    .collect(MoreCollectors.toMap(Map.Entry::getKey, Map.Entry::getValue, LinkedHashMap::new));
+        }
+
+        Set<String> uniqueColumnSet = uniqueColumnSet(desiredRow, db);
+        String setClause =  changedValues.keySet().stream().map(column -> column + " = ?").collect(joining(" and "));
         String whereClause =  uniqueColumnSet.stream().map(column -> column + " = ?").collect(joining(" and "));
         String sql = "update " + tableName + " set " + setClause + " where " + whereClause;
         List<Object> values = Stream.concat(
                 // set values
-                columnValues.values().stream(),
+                changedValues.values().stream(),
                 // where values
                 columnValues.entrySet().stream()
                         .filter(e -> uniqueColumnSet.contains(e.getKey()))

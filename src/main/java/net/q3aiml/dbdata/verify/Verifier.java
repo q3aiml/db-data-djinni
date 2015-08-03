@@ -4,6 +4,7 @@ import net.q3aiml.dbdata.DataSpec;
 import net.q3aiml.dbdata.config.DatabaseConfig;
 import net.q3aiml.dbdata.introspect.DefaultDatabaseIntrospector;
 import net.q3aiml.dbdata.model.DatabaseMetadata;
+import net.q3aiml.dbdata.model.Table;
 import net.q3aiml.dbdata.morph.KeyResolver;
 import net.q3aiml.dbdata.morph.Rekeyer;
 
@@ -47,7 +48,8 @@ public class Verifier {
 
         List<VerificationError> errors = new ArrayList<>();
         for (DataSpec.DataSpecRow expectedRow : dataSpec.tableRows) {
-            Set<Set<String>> availableUniqueColumnSets = db.tableByNameNoCreate(expectedRow.getTable()).uniqueInfo()
+            Table table = db.tableByNameNoCreate(expectedRow.getTable());
+            Set<Set<String>> availableUniqueColumnSets = table.uniqueInfo()
                     .findAvailableUniqueColumnSets(expectedRow.getRow().keySet());
             Set<String> uniqueColumnSet = availableUniqueColumnSets.iterator().next();
             String where = uniqueColumnSet.stream()
@@ -64,16 +66,23 @@ public class Verifier {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         for (Map.Entry<String, Object> entry : expectedRow.getRow().entrySet()) {
-                            String actualValue = rs.getString(entry.getKey());
+                            String actualValue;
+                            try {
+                                actualValue = rs.getString(entry.getKey());
+                            } catch (SQLException e) {
+                                throw new SQLException("unable to get column " + entry.getKey() + " from "
+                                        + expectedRow.getTable(), e);
+                            }
                             if (!Objects.equals(actualValue, entry.getValue())) {
                                 DataSpec.DataSpecRow actualRow =
                                         DataSpec.DataSpecRow.copyOfResultSetAsStrings(expectedRow.getTable(), rs);
                                 errors.add(new VerificationError(VerificationError.Type.VALUE_MISMATCH, actualRow,
-                                        expectedRow, entry.getKey()));
+                                        expectedRow));
+                                continue;
                             }
                         }
                     } else {
-                        errors.add(new VerificationError(VerificationError.Type.MISSING_ROW, null, expectedRow, null));
+                        errors.add(new VerificationError(VerificationError.Type.MISSING_ROW, null, expectedRow));
                     }
                 }
             }
