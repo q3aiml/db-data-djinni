@@ -3,6 +3,8 @@ package net.q3aiml.dbdata.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 public class Table {
     public String schema;
     public String name;
@@ -12,6 +14,10 @@ public class Table {
     public Table(String schema, String name) {
         this.schema = schema;
         this.name = name;
+    }
+
+    public String fullName() {
+        return isNullOrEmpty(schema) ? name : schema + "." + name;
     }
 
     public List<String> primaryKeyColumns() {

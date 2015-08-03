@@ -4,8 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import net.q3aiml.dbdata.DataSpec;
 import net.q3aiml.dbdata.JdbcMock;
 import net.q3aiml.dbdata.config.RekeyerConfig;
+import net.q3aiml.dbdata.jdbc.UnpreparedStatement;
 import net.q3aiml.dbdata.model.DatabaseMetadata;
 import net.q3aiml.dbdata.model.ForeignKeyReference;
+import net.q3aiml.dbdata.model.Table;
 import org.junit.Test;
 
 import java.sql.Connection;
@@ -13,6 +15,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -24,6 +29,8 @@ public class RekeyerTest {
     RekeyerConfig config = new RekeyerConfig();
     DatabaseMetadata db = new DatabaseMetadata();
     PreparedStatement ps = mock(PreparedStatement.class);
+
+    Rekeyer rekeyer = new Rekeyer();
 
     @Test
     public void rekeyerTest() throws SQLException {
@@ -37,7 +44,7 @@ public class RekeyerTest {
         db.table(null, "testtable").setPrimaryKeyColumns(asList("id"));
         config.altKeys.put("testtable", asList("altkey"));
 
-        when(c.prepareStatement("SELECT * FROM testtable WHERE altkey = ?")).thenReturn(ps);
+        when(c.prepareStatement("SELECT testtable.* FROM testtable WHERE testtable.altkey = ?")).thenReturn(ps);
         ResultSet rs = JdbcMock.resultSet(
                 asList("id", "altkey"),
                 asList(
@@ -46,7 +53,7 @@ public class RekeyerTest {
         );
         when(ps.executeQuery()).thenReturn(rs);
 
-        new Rekeyer().rekey(dataSpec, c, config, db);
+        rekeyer.rekey(dataSpec, c, config, db);
 
         verify(ps).setObject(1, "Green");
         assertEquals("321", row.getRow().get("id"));
@@ -74,19 +81,59 @@ public class RekeyerTest {
         db.addReference(new ForeignKeyReference(
                 db.table(null, "breed"), asList("breed_pk"), db.table(null, "rabbit"), asList("breed_fk")));
 
-        when(c.prepareStatement("SELECT * FROM rabbit WHERE name = ? AND breed_fk = ?")).thenReturn(ps);
+        when(c.prepareStatement("SELECT rabbit.* FROM rabbit WHERE rabbit.name = ? AND rabbit.breed_fk = ?"))
+                .thenReturn(ps);
         ResultSet rs = JdbcMock.resultSet(
-                asList("rabbit_pk"),
+                asList("rabbit_pk", "breed_fk"),
                 asList(
-                        asList("1000")
+                        asList("1000", "2")
                 )
         );
         when(ps.executeQuery()).thenReturn(rs);
 
-        new Rekeyer().rekey(dataSpec, c, config, db);
+        rekeyer.rekey(dataSpec, c, config, db);
 
         verify(ps).setObject(1, "Truffles");
         verify(ps).setObject(2, "2");
         assertEquals("1000", rabbitRow.getRow().get("rabbit_pk"));
+    }
+
+    @Test
+    public void parseAltKeyColumnTest() {
+        Table rabbit = db.table("schema", "rabbit");
+        Table owner = db.table("schema", "owner");
+        ForeignKeyReference reference = new ForeignKeyReference(owner, asList("owner_pk"), rabbit, asList("owner_fk"));
+        db.addReference(reference);
+
+        Rekeyer.AltKeyColumn altKeyColumn = rekeyer.parseAltKeyColumn(rabbit, "owner_fk.name", db);
+        assertEquals(rabbit, altKeyColumn.startTable);
+        assertEquals(asList("owner_fk", "name"), altKeyColumn.altKeyColumnPath);
+        assertEquals(asList(reference), altKeyColumn.referencePath);
+    }
+
+    @Test
+    public void altKeyQuerySimpleValueTest() {
+        Table rabbit = new Table("schema", "rabbit");
+        Map<Rekeyer.AltKeyColumn, Optional<Object>> columnValues = new LinkedHashMap<>();
+        columnValues.put(new Rekeyer.AltKeyColumn(rabbit, asList("name"), asList()),
+                Optional.of("truffles"));
+        UnpreparedStatement query = rekeyer.altKeyQuery("rabbit", columnValues, db);
+        assertEquals("SELECT rabbit.* FROM rabbit WHERE schema.rabbit.name = ?", query.sql());
+        assertEquals(asList("truffles"), query.values());
+    }
+
+    @Test
+    public void altKeyQueryJoinTest() {
+        Table rabbit = new Table("schema", "rabbit");
+        Table owner = new Table("schema", "owner");
+        Map<Rekeyer.AltKeyColumn, Optional<Object>> columnValues = new LinkedHashMap<>();
+        columnValues.put(new Rekeyer.AltKeyColumn(rabbit, asList("owner_fk", "name"),
+                        asList(new ForeignKeyReference(owner, asList("owner_pk"), rabbit, asList("owner_fk")))),
+                Optional.of("name_value"));
+        UnpreparedStatement query = rekeyer.altKeyQuery("rabbit", columnValues, db);
+        assertEquals("SELECT rabbit.* FROM rabbit "
+                + "LEFT JOIN schema.owner ON (schema.owner.owner_pk = schema.rabbit.owner_fk) "
+                + "WHERE schema.owner.name = ?", query.sql());
+        assertEquals(asList("name_value"), query.values());
     }
 }
