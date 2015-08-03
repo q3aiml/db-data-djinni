@@ -53,8 +53,11 @@ public class Exporter {
     public List<TableData> extract(String startTableName, String startQuery) throws SQLException {
         List<TableData> allDatas = new ArrayList<>();
         try (Connection c = dataSource.getConnection()) {
-            db = new DatabaseMetadata();
+            db = config.databaseMetadata;
             introspector.load(c, db);
+            for (ForeignKeyReference fkr : config.foreignKeys) {
+                db.addReference(fkr);
+            }
 
             Table startTable = db.tableByNameNoCreate(startTableName);
             TableData startData = executeStart(c, startTable, startQuery);

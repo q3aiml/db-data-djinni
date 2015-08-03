@@ -43,7 +43,7 @@ public class RabbitIT {
 
     public void loadConfig(String name) throws IOException {
         databaseConfig = DatabaseConfig.fromYaml(Resources.toString(Resources.getResource(name),
-                StandardCharsets.UTF_8));
+                StandardCharsets.UTF_8), databaseMetadata);
     }
 
     @Test

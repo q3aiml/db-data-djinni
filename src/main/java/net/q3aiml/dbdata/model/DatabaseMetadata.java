@@ -1,15 +1,13 @@
 package net.q3aiml.dbdata.model;
 
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.alg.CycleDetector;
 import org.jgrapht.graph.DirectedPseudograph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,7 +22,7 @@ public class DatabaseMetadata {
     public Table table(String schema, String table) {
         String fullNormalizedName = qualifiedTableName(normalizeName(schema), normalizeName(table));
         if (!tablesByName.containsKey(fullNormalizedName)) {
-            addTable(schema, table);
+            return addTable(new Table(schema, table));
         }
         return tablesByName.get(fullNormalizedName);
     }
@@ -33,14 +31,23 @@ public class DatabaseMetadata {
         tableName = normalizeName(tableName);
         Table table = tablesByName.get(tableName);
         if (table == null) {
-            throw new NoSuchElementException("no table named '" + tableName + "'");
+            throw new NoSuchElementException("no table named '" + tableName + "' " +
+                    "(known tables: " + tablesByName.keySet() + ")");
         }
         return table;
     }
 
+    public Table tableByName(String table) {
+        List<String> strings = Splitter.on(".").limit(2).splitToList(table);
+        if (strings.size() > 1) {
+            return table(strings.get(0), strings.get(1));
+        } else {
+            return table(null, strings.get(0));
+        }
+    }
+
     public Table addTable(String schemaName, String tableName) {
-        Table table = new Table(schemaName, tableName);
-        return addTable(table);
+        return table(schemaName, tableName);
     }
 
     public Table addTable(Table table) {

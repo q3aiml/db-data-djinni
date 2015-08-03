@@ -1,7 +1,13 @@
 package net.q3aiml.dbdata.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 import java.util.Objects;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class ForeignKeyReference extends TableToTableReference {
     private final Table primaryKeyTable;
@@ -10,10 +16,29 @@ public class ForeignKeyReference extends TableToTableReference {
     private final List<String> foreignKeyColumns;
 
     public ForeignKeyReference(Table pkTable, List<String> primaryKeyColumns, Table toTable, List<String> foreignKeyColumns) {
+        checkArgument(primaryKeyColumns.size() == foreignKeyColumns.size(),
+                "primary and foreign key column lists must be same size");
+
         this.primaryKeyTable = pkTable;
         this.primaryKeyColumns = primaryKeyColumns;
         this.foreignKeyTable = toTable;
         this.foreignKeyColumns = foreignKeyColumns;
+    }
+
+    @JsonCreator
+    public ForeignKeyReference(
+            @JacksonInject("metadata")
+            DatabaseMetadata db,
+            @JsonProperty("pk_table")
+            String pkTable,
+            @JsonProperty("pk_columns")
+            List<String> primaryKeyColumns,
+            @JsonProperty("fk_table")
+            String toTable,
+            @JsonProperty("fk_columns")
+            List<String> foreignKeyColumns)
+    {
+        this(db.tableByName(pkTable), primaryKeyColumns, db.tableByName(toTable), foreignKeyColumns);
     }
 
     @Override
