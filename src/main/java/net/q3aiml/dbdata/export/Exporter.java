@@ -8,6 +8,7 @@ import net.q3aiml.dbdata.jdbc.TableDataQueryer;
 import net.q3aiml.dbdata.jdbc.UnpreparedStatement;
 import net.q3aiml.dbdata.model.*;
 import net.q3aiml.dbdata.morph.KeyResolver;
+import net.q3aiml.dbdata.morph.PrimaryKeyFilter;
 import net.q3aiml.dbdata.morph.SortDataSpec;
 
 import javax.sql.DataSource;
@@ -112,6 +113,8 @@ public class Exporter {
         keyResolver.toReferences(dataSpec, db);
         SortDataSpec sortDataSpec = new SortDataSpec();
         sortDataSpec.sortRowTables(dataSpec, db);
+        PrimaryKeyFilter primaryKeyFilter = new PrimaryKeyFilter();
+        primaryKeyFilter.filterPrimaryKeys(dataSpec, db);
 
         return dataSpec;
     }
