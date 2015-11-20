@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Populates {@link DatabaseMetadata} by querying a {@link Connection}.
+ */
 public class DefaultDatabaseIntrospector {
     private final String desiredSchema;
 

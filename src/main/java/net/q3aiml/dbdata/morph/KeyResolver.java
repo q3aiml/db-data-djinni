@@ -12,7 +12,13 @@ import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
 
+/**
+ * Map between foreign keys and the referenced row {@link net.q3aiml.dbdata.DataSpec.DataSpecRow} in a {@link DataSpec}.
+ */
 public class KeyResolver {
+    /**
+     * Replace {@link net.q3aiml.dbdata.DataSpec.DataSpecRow} column values in {@code dataSpec} with key values
+     */
     public void toKeys(DataSpec dataSpec, DatabaseMetadata db) {
         for (DataSpec.DataSpecRow row : dataSpec.tableRows) {
             for (Map.Entry<String, Object> rowColumn : row.getRow().entrySet()) {
@@ -37,6 +43,9 @@ public class KeyResolver {
         }
     }
 
+    /**
+     * Replace key values in {@code dataSpec} with referenced {@link net.q3aiml.dbdata.DataSpec.DataSpecRow}
+     */
     public void toReferences(DataSpec dataSpec, DatabaseMetadata db) {
         Map<Table, Set<String>> referencedColumnsByTable = db.references().stream()
                 .filter(ForeignKeyReference.class::isInstance)

@@ -12,6 +12,9 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * Generate sql to insert, delete, or update a {@link net.q3aiml.dbdata.DataSpec.DataSpecRow}.
+ */
 public class DataSpecModifySql {
     public UnpreparedStatement insertSql(DataSpec.DataSpecRow row, DatabaseMetadata db) {
         Map<String, Object> values = row.getRow();

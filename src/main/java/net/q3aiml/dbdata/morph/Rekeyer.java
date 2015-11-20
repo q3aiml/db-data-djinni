@@ -23,7 +23,10 @@ import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.*;
 
 /**
- * Lookup primary keys based on other unique sets of columns
+ * Query database to lookup primary keys based on other unique sets of columns (alt keys).
+ * <p/>
+ * Handles cases where primary keys differ between environments and other columns need to be
+ * used to determine when rows are functionally equivalent.
  */
 public class Rekeyer {
     protected UnpreparedStatementExecutor executor = new UnpreparedStatementExecutor();
@@ -65,6 +68,10 @@ public class Rekeyer {
         }
     }
 
+    /**
+     * parses an alt key string (possibly a complex alt key involving a path) into an
+     * {@link net.q3aiml.dbdata.morph.Rekeyer.AltKeyColumn}
+     */
     protected AltKeyColumn parseAltKeyColumn(Table table, String altKeyColumnPathString, DatabaseMetadata db) {
         List<String> altKeyColumnPath = Splitter.on(".").splitToList(altKeyColumnPathString);
         List<ForeignKeyReference> referencePath = new ArrayList<>(altKeyColumnPath.size() - 1);
@@ -148,6 +155,9 @@ public class Rekeyer {
         }
     }
 
+    /**
+     * parsed alt key and relationships involved
+     */
     protected static class AltKeyColumn {
         protected Table startTable;
         protected List<String> altKeyColumnPath;
@@ -172,6 +182,10 @@ public class Rekeyer {
             return column;
         }
 
+        /**
+         * Find the value referred to by this alt key in the row values {@code values}.
+         * @param values a single row's values as a map of the column name to value
+         */
         public Optional<Object> getValue(Map<String, Object> values, DatabaseMetadata db) {
             Object value = values.get(altKeyColumnPath.get(0));
             for (String altKeyPart : Iterables.skip(altKeyColumnPath, 1)) {

@@ -4,6 +4,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Sql statement and values of placeholders in the sql.
+ */
 public class UnpreparedStatement {
     private final String sql;
     private final List<?> values;

@@ -11,6 +11,9 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Tables, the relationship graph between tables, and other metadata.
+ */
 public class DatabaseMetadata {
     DirectedGraph<Table, TableToTableReference> graph = new DirectedPseudograph<>(TableToTableReference.class);
     Map<String, Table> tablesByName = new HashMap<>();
