@@ -24,7 +24,7 @@ public class DatabaseConfig {
     }
 
     @JacksonInject("metadata")
-    public DatabaseMetadata databaseMetadata;
+    public DatabaseMetadata databaseMetadata = new DatabaseMetadata();
 
     @JsonProperty("schema")
     public String schema;
